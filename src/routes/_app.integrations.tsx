@@ -1,5 +1,4 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,11 +22,11 @@ function Page() {
   if (role && role !== "admin") return <Navigate to="/dashboard" />;
 
   const qc = useQueryClient();
-  const fetchIntegration = useServerFn(getIntegration);
-  const save = useServerFn(saveIntegration);
-  const detect = useServerFn(detectHeaders);
-  const sync = useServerFn(triggerSync);
-  const fetchLogs = useServerFn(getSyncLogs);
+  const fetchIntegration = getIntegration;
+  const save = saveIntegration;
+  const detect = detectHeaders;
+  const sync = triggerSync;
+  const fetchLogs = getSyncLogs;
 
   const integQ = useQuery({ queryKey: ["integration"], queryFn: () => fetchIntegration() });
   const logsQ = useQuery({ queryKey: ["sync-logs"], queryFn: () => fetchLogs(), refetchInterval: 10000 });
@@ -91,12 +90,12 @@ function Page() {
   });
 
   const syncMut = useMutation({
-    mutationFn: async (full: boolean) => { await ensureSaved(); return sync({ data: { fullHistory: full } }); },
+    mutationFn: async (full: boolean) => { await ensureSaved(); return sync({ fullHistory: full }); },
     onSuccess: (r) => {
-      const created = Number(r?.created ?? r?.rows_created ?? 0);
-      const updated = Number(r?.updated ?? r?.rows_updated ?? 0);
-      const skipped = Number(r?.skipped ?? r?.rows_skipped ?? 0);
-      const errors = Number(r?.errors ?? (Array.isArray(r?.error_details) ? r.error_details.length : 0));
+      const created = Number(r?.created ?? 0);
+      const updated = Number(r?.updated ?? 0);
+      const skipped = Number(r?.skipped ?? 0);
+      const errors = Number(r?.errors ?? 0);
       setRuntimeDiagnostics(r?.diagnostics ?? null);
       toast.success(`Sync Complete\nCreated: ${created}\nUpdated: ${updated}\nSkipped: ${skipped}\nErrors: ${errors}`);
       qc.invalidateQueries({ queryKey: ["integration"] }); qc.invalidateQueries({ queryKey: ["sync-logs"] });
